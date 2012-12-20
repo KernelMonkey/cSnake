@@ -1,8 +1,9 @@
 /*
  *   This file is part of cSnake
  *
- *   Copyright (C) 2012 by slacknux <slacknux@gmail.com>
- *   http://www.slacknux.net
+ *   Copyright (C) 2012 by slacknux <slacknux@gmail.com> - http://www.slacknux.net
+ *   kmonkey <orazio.briante@hotmail.it>
+ *
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -18,14 +19,21 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "cSnake.h"
+#include <cSnake.h>
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+#include <unistd.h>
+#include <pwd.h>
+#include <ncurses.h>
 
 int ate = 0;
 int foodx = 0, foody = 0;
 int speed = 0;
 
 int menu() {
-	int level;
+
 
 	mvprintw(LINES/2-8, COLS/2-18, "      ****  **  *   ***   *  *  ****");
 	mvprintw(LINES/2-7, COLS/2-18, "***   ****  * * *  *****  **    ***");
@@ -41,6 +49,9 @@ int menu() {
 	mvprintw(LINES/2+3, COLS/2+7, "esc to exit");
 	mvprintw(LINES/2+6, COLS/2-9, "(choice a number)");
 
+
+	int level=0;
+
 	do
 		level = getch();
 	while(level<49 || level>51);
@@ -55,40 +66,57 @@ void game_over() {
 }
 
 int get_high_score(int level) {
-	int sc = 0;
-	char name[15];
-	char score[7];
-	FILE *fp;
 
-	sprintf(name, "highscore%d.txt", level);
+	int score=-1;
+	char *name=NULL;
 
-	if((fp = fopen(name, "r")) == NULL) {
-		return 0;
-	}
-	
-	if(fgets(score, sizeof(score), fp) == NULL) {
+	uid_t uid = geteuid();
+	struct passwd *p = getpwuid(uid);
+	asprintf(&name, "%s/highscore%d.txt",  p->pw_dir, level);
+
+	FILE *fp = fopen(name, "r");
+
+
+	if(fp != NULL){
+
+		char _score[7];
+		if(fgets(_score, sizeof(_score), fp)!=NULL)
+			score=atoi(_score);
+
 		fclose(fp);
-		return 0;
 	}
 
-	fclose(fp);
-	sc = atoi(score);
+	if(name){
+		free(name);
+		name=NULL;
+	}
 
-	return sc;
+	return score;
 }
 
+
 void put_high_score(int score, int level) {
+
 	int get_score = 0;
-	char name[15];
+	char *name=NULL;
 	FILE *fp;
 
-	sprintf(name, "highscore%d.txt", level);
+	uid_t uid = geteuid();
+	struct passwd *p = getpwuid(uid);
+
+	asprintf(&name, "%s/highscore%d.txt",  p->pw_dir, level);
+
 	get_score = get_high_score(level);
 
 	if(score > get_score) { 
 		fp = fopen(name, "w");
 		fprintf(fp, "%d", score);
 		fclose(fp);
+	}
+
+	if(name){
+		free(name);
+		name=NULL;
 	}
 }
 
@@ -97,11 +125,11 @@ void food(int count, snake *s) {
 	int flag;
 	char food_body = '@';
 
-	while(1) {
+	while(TRUE) {
 		flag = 0;
 		foodx = rand() % (COLS-2) + 1;
 		foody = rand() % (LINES-3) + 2;
-		
+
 		//check if the food position is on the snake's body
 		for(i=0; i<count; i++) {
 			if(s[i].x==foodx && s[i].y==foody) {
@@ -164,11 +192,10 @@ void cSnake() {
 	int c = 0;
 	int count = 5;
 	int level = 0;
-	int get_score = 0;
+
 	char direction = 'r';
 	char snake_body = '*';
 	char borders_part = (char)219;
-	snake *s;
 
 	initscr();
 	noecho();
@@ -176,8 +203,12 @@ void cSnake() {
 	keypad(stdscr,true);
 
 	level = menu() - 48;
-        get_score = get_high_score(level);
-	s = (snake*) malloc(count * sizeof(snake));
+	int get_score = get_high_score(level);
+
+	if(!get_score)
+		get_score=0;
+
+	snake *s = (snake*) malloc(count * sizeof(snake));
 
 	clear();
 	nodelay(stdscr,true);
@@ -194,12 +225,12 @@ void cSnake() {
 	}
 	//up and down borders
 	for(i=1; i<LINES; i++) {
-                 mvaddch(i, 0, borders_part);
-                 mvaddch(i, COLS-1, borders_part);
-         }
+		mvaddch(i, 0, borders_part);
+		mvaddch(i, COLS-1, borders_part);
+	}
 	//snake's body
 	for(i=0; i<count; i++) {
-			mvaddch(s[i].y, s[i].x, snake_body);
+		mvaddch(s[i].y, s[i].x, snake_body);
 	}
 
 	srand(time(NULL));
@@ -212,9 +243,9 @@ void cSnake() {
 
 	//the speed according to the level
 	switch(level) {
-		case 1: speed=100000; break;
-		case 2: speed=80000; break;
-		case 3: speed=50000; break;
+	case 1: speed=100000; break;
+	case 2: speed=80000; break;
+	case 3: speed=50000; break;
 	}
 
 	while((c=getch())) {
@@ -226,41 +257,41 @@ void cSnake() {
 		}
 
 		switch(c) {
-			case KEY_LEFT:
-				if(direction!='r')
-					direction='l';
-				break;
+		case KEY_LEFT:
+			if(direction!='r')
+				direction='l';
+			break;
 
-			case KEY_UP:
-				if(direction!='d')
-					direction='u';
-				break;
+		case KEY_UP:
+			if(direction!='d')
+				direction='u';
+			break;
 
-			case KEY_DOWN:
-				if(direction!='u')
-					direction='d';
-				break;
+		case KEY_DOWN:
+			if(direction!='u')
+				direction='d';
+			break;
 
-			case KEY_RIGHT:
-				if(direction!='l')
-					direction='r';
-				break;
+		case KEY_RIGHT:
+			if(direction!='l')
+				direction='r';
+			break;
 
-			case SPACEBAR:
-				nodelay(stdscr, false);
-				mvprintw(0, 18, "PAUSE");
+		case SPACEBAR:
+			nodelay(stdscr, false);
+			mvprintw(0, 18, "PAUSE");
 
-				while((c=getch())!=32)
-					continue;
+			while((c=getch())!=32)
+				continue;
 
-				nodelay(stdscr,true);
-				mvprintw(0, 18, "     ");
-				break;
-			case ESC:
-				endwin();
-				free(s);
-				exit(0);
-				break;
+			nodelay(stdscr,true);
+			mvprintw(0, 18, "     ");
+			break;
+		case ESC:
+			endwin();
+			free(s);
+			exit(EXIT_SUCCESS);
+			break;
 		}
 
 		if(!ate) {
@@ -274,10 +305,21 @@ void cSnake() {
 		}
 
 		switch(direction) {
-			case 'r': s[count-1].x += 1; break;
-			case 'l': s[count-1].x -= 1; break;
-			case 'd': s[count-1].y += 1; break;
-			case 'u': s[count-1].y -= 1; break;
+		case 'r':
+			s[count-1].x += 1;
+			break;
+
+		case 'l':
+			s[count-1].x -= 1;
+			break;
+
+		case 'd':
+			s[count-1].y += 1;
+			break;
+
+		case 'u':
+			s[count-1].y -= 1;
+			break;
 		}
 
 		mvaddch(s[count-1].y, s[count-1].x, snake_body);

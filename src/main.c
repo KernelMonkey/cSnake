@@ -1,8 +1,8 @@
 /*
  *   This file is part of cSnake
  *
- *   Copyright (C) 2012 by slacknux <slacknux@gmail.com>
- *   http://www.slacknux.net
+ *   Copyright (C) 2012 by slacknux <slacknux@gmail.com> - http://www.slacknux.net
+ *   kmonkey <orazio.briante@hotmail.it>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -18,9 +18,14 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "cSnake.h"
+#include <cSnake.h>
+#include <stdlib.h>
 
-int main(int argc, char** argv) {
+
+
+int main(int argc, char *argv[]) {
+
 	cSnake();
-	return 0;
+
+	return EXIT_SUCCESS;
 }

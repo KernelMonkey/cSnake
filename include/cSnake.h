@@ -1,8 +1,8 @@
 /*
  *   This file is part of cSnake
  *
- *   Copyright (C) 2012 by slacknux <slacknux@gmail.com>
- *   http://www.slacknux.net
+*   Copyright (C) 2012 by slacknux <slacknux@gmail.com> - http://www.slacknux.net
+ *   kmonkey <orazio.briante@hotmail.it>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -18,12 +18,6 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <ncurses.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
-#include <unistd.h>
-
 #define ESC 	 27
 #define SPACEBAR 32
 
@@ -33,11 +27,11 @@ typedef struct {
 	int y;
 } snake;
 
-int menu();
-void game_over();
-int get_high_score(int level);
-void put_high_score(int score, int level);
-void food(int count, snake *s);
-int impact(int count, int level, snake *s);
-void shift_left(snake s[], int c);
-void cSnake();
+extern int menu();
+extern void game_over();
+extern int get_high_score(int level);
+extern void put_high_score(int score, int level);
+extern void food(int count, snake *s);
+extern int impact(int count, int level, snake *s);
+extern void shift_left(snake s[], int c);
+extern void cSnake();
